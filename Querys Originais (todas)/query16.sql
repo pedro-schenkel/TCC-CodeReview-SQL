@@ -1,0 +1,35 @@
+USE TPCH;
+GO
+
+SET STATISTICS IO ON;
+SET STATISTICS TIME ON;
+GO
+
+SELECT
+    p.p_brand,
+    p.p_type,
+    p.p_size,
+    COUNT(DISTINCT ps.ps_suppkey) AS supplier_cnt
+FROM part p
+INNER JOIN partsupp ps
+    ON p.p_partkey = ps.ps_partkey
+WHERE p.p_brand <> 'Brand#45'
+  AND p.p_type NOT LIKE 'MEDIUM POLISHED%'
+  AND p.p_size IN (3, 9, 14, 19, 23, 36, 45, 49)
+  AND ps.ps_suppkey NOT IN
+  (
+      SELECT
+          s.s_suppkey
+      FROM supplier s
+      WHERE s.s_comment LIKE '%Customer%Complaints%'
+  )
+GROUP BY
+    p.p_brand,
+    p.p_type,
+    p.p_size
+ORDER BY
+    supplier_cnt DESC,
+    p.p_brand,
+    p.p_type,
+    p.p_size
+OPTION (MAXDOP 2);
